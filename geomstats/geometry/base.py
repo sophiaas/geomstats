@@ -22,11 +22,12 @@ class VectorSpace(Manifold, abc.ABC):
         product of these values by default.
     """
 
-    def __init__(self, shape, **kwargs):
+    def __init__(self, shape, field="real", **kwargs):
         kwargs.setdefault("dim", int(gs.prod(gs.array(shape))))
         super().__init__(shape=shape, **kwargs)
         self.shape = shape
         self._basis = None
+        self.field = field
 
     def belongs(self, point, atol=gs.atol):
         """Evaluate if the point belongs to the vector space.
@@ -135,7 +136,12 @@ class VectorSpace(Manifold, abc.ABC):
         size = self.shape
         if n_samples != 1:
             size = (n_samples,) + self.shape
-        point = bound * (gs.random.rand(*size) - 0.5) * 2
+        if self.field == "real":
+            point = bound * (gs.random.rand(*size) - 0.5) * 2
+        else:
+            point = gs.cast(gs.random.rand(*size), dtype=CDTYPE) - 0.5
+            point += 1j * (gs.cast(gs.random.rand(*size), dtype=CDTYPE) - 0.5)
+            point *= 2 * bound
         return point
 
     @property

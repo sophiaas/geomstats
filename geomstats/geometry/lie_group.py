@@ -10,29 +10,40 @@ import geomstats.errors as errors
 from geomstats.geometry.invariant_metric import InvariantMetric
 from geomstats.geometry.manifold import Manifold
 from geomstats.geometry.matrices import Matrices
+from geomstats.geometry.complex_matrices import ComplexMatrices
+
 
 ATOL = 1e-6
+CDTYPE = gs.get_default_cdtype()
 
 
 class MatrixLieGroup(Manifold, abc.ABC):
     """Class for matrix Lie groups."""
 
-    def __init__(self, dim, n, lie_algebra=None, **kwargs):
+    def __init__(self, dim, n, lie_algebra=None, field="real", **kwargs):
         super().__init__(dim=dim, shape=(n, n), **kwargs)
+        errors.check_parameter_accepted_values(
+            field, "field", ["real", "complex"]
+        )
         self.lie_algebra = lie_algebra
         self.n = n
-        self.left_canonical_metric = InvariantMetric(
-            group=self, metric_mat_at_identity=gs.eye(self.dim), left_or_right="left"
-        )
+        self.field = field
 
-        self.right_canonical_metric = InvariantMetric(
-            group=self, metric_mat_at_identity=gs.eye(self.dim), left_or_right="right"
-        )
+        if self.field == "real":
+            self.left_canonical_metric = InvariantMetric(
+                group=self, metric_mat_at_identity=gs.eye(self.dim), left_or_right="left"
+            )
+
+            self.right_canonical_metric = InvariantMetric(
+                group=self, metric_mat_at_identity=gs.eye(self.dim), left_or_right="right"
+            )
 
     @property
     def identity(self):
-        """Matrix identity."""
-        return gs.eye(self.n)
+        """Return the identity."""
+        if self.field == "real":
+            return gs.eye(self.n)
+        return gs.eye(self.n, dtype=CDTYPE)
 
     @staticmethod
     def compose(point_a, point_b):

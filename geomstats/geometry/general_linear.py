@@ -4,8 +4,9 @@ import geomstats.algebra_utils as utils
 import geomstats.backend as gs
 from geomstats.geometry.base import OpenSet
 from geomstats.geometry.lie_algebra import MatrixLieAlgebra
-from geomstats.geometry.lie_group import MatrixLieGroup
+from geomstats.geometry.lie_group import MatrixLieGroup, ComplexMatrixLieGroup
 from geomstats.geometry.matrices import Matrices
+from geomstats.geometry.complex_matrices import ComplexMatrices
 
 
 class GeneralLinear(MatrixLieGroup, OpenSet):
@@ -24,7 +25,7 @@ class GeneralLinear(MatrixLieGroup, OpenSet):
         Optional, default: False.
     """
 
-    def __init__(self, n, positive_det=False, **kwargs):
+    def __init__(self, n, positive_det=False, field="real", **kwargs):
         embedding_space = Matrices(n, n)
         kwargs.setdefault("dim", n**2)
         kwargs.setdefault("metric", embedding_space.metric)
@@ -32,7 +33,8 @@ class GeneralLinear(MatrixLieGroup, OpenSet):
         super().__init__(
             embedding_space=embedding_space,
             n=n,
-            lie_algebra=SquareMatrices(n),
+            lie_algebra=SquareMatrices(n, field=field),
+            field=field,
             **kwargs
         )
 
@@ -180,9 +182,9 @@ class SquareMatrices(MatrixLieAlgebra):
         Integer representing the shape of the matrices: n x n.
     """
 
-    def __init__(self, n):
+    def __init__(self, n, field="real"):
         super().__init__(n=n, dim=n**2)
-        self.mat_space = Matrices(n, n)
+        self.mat_space = Matrices(n, n, field=field)
 
     def _create_basis(self):
         """Create the canonical basis of the space of matrices."""

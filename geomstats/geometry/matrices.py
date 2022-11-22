@@ -7,6 +7,7 @@ import geomstats.errors
 from geomstats.algebra_utils import flip_determinant, from_vector_to_diagonal_matrix
 from geomstats.geometry.base import VectorSpace
 from geomstats.geometry.euclidean import EuclideanMetric
+from geomstats.geometry.complex_matrices import ComplexMatricesMetric
 
 
 class Matrices(VectorSpace):
@@ -18,13 +19,17 @@ class Matrices(VectorSpace):
         Integers representing the shapes of the matrices: m x n.
     """
 
-    def __init__(self, m, n, **kwargs):
+    def __init__(self, m, n, field="real", **kwargs):
         geomstats.errors.check_integer(n, "n")
         geomstats.errors.check_integer(m, "m")
-        kwargs.setdefault("metric", MatricesMetric(m, n))
+        if self.field == "real":
+            kwargs.setdefault("metric", MatricesMetric(m, n))
+        else:
+            kwargs.setdefault("metric", ComplexMatricesMetric(m, n))
         super().__init__(shape=(m, n), **kwargs)
         self.m = m
         self.n = n
+        self.field = field
 
     def _create_basis(self):
         """Create the canonical basis."""
@@ -149,7 +154,7 @@ class Matrices(VectorSpace):
 
     @staticmethod
     def is_square(mat):
-        """Check if a matrix is square.
+        """Check if a matrix is (square).
 
         Parameters
         ----------
