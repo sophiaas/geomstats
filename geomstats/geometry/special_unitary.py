@@ -22,12 +22,21 @@ class SpecialUnitaryMatrices(ComplexMatrixLieGroup, LevelSet):
         Integer representing the shape of the matrices: n x n.
     """
 
-    def __init__(self, n, **kwargs):
+    def __init__(self, n=None, **kwargs):
 
         self.n = n
-        self.value = gs.eye(n, dtype=CDTYPE)
+        self._value = gs.eye(n, dtype=CDTYPE)
 
-        super().__init__(
+        ComplexMatrixLieGroup.__init__(
+            self,
+            dim=int((n * (n - 1)) / 2),
+            representation_dim=n,
+            lie_algebra=SkewHermitianMatrices(n=n),
+            default_coords_type="extrinsic",
+            **kwargs,
+        )
+        LevelSet.__init__(
+            self,
             dim=int((n * (n - 1)) / 2),
             representation_dim=n,
             lie_algebra=SkewHermitianMatrices(n=n),
@@ -67,8 +76,7 @@ class SpecialUnitaryMatrices(ComplexMatrixLieGroup, LevelSet):
         -------
         submersed_vector : array-like, shape=[..., n, n]
         """
-        # tangent_submersion=lambda v, x: 2 * ComplexMatrices.to_symmetric(ComplexMatrices.mul(ComplexMatrices.transconjugate(x), v)),
-        return 2 * ComplexMatrices.to_symmetric(ComplexMatrices.mul(ComplexMatrices.transconjugate(point), vector))
+        return 2 * ComplexMatrices.to_hermitian(ComplexMatrices.mul(ComplexMatrices.transconjugate(point), vector))
 
     @classmethod
     def inverse(cls, point):
@@ -116,10 +124,9 @@ class SpecialUnitaryMatrices(ComplexMatrixLieGroup, LevelSet):
         rot_mat : array-like, shape=[..., n, n]
             Rotation matrix.
         """
-        aux_mat = self.submersion(point)
+        aux_mat = self._aux_submersion(point)
         inv_sqrt_mat = HermitianMatrices.powerm(aux_mat, -1 / 2)
         rotation_mat = ComplexMatrices.mul(point, inv_sqrt_mat)
-        det = gs.linalg.det(rotation_mat)
         return rotation_mat
 
     def random_point(self, n_samples=1, bound=1.0):
