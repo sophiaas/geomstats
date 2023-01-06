@@ -1,4 +1,8 @@
-"""Module exposing the GeneralLinear group class."""
+"""
+Module exposing the ComplexGeneralLinear group class.
+
+Lead author: Sophia Sanborn
+"""
 
 import geomstats.algebra_utils as utils
 import geomstats.backend as gs
@@ -9,35 +13,36 @@ from geomstats.geometry.complex_lie_algebra import ComplexMatrixLieAlgebra
 
 
 class ComplexGeneralLinear(ComplexMatrixLieGroup, OpenSet):
-    """Class for the general linear group GL(n) and its identity component.
-
-    If `positive_det=True`, this is the connected component of the identity,
-    i.e. the space of matrices with positive determinant.
+    """Class for the general linear group over the complex field GL(n, C).
 
     Parameters
     ----------
     n : int
         Integer representing the shape of the matrices: n x n.
-    positive_det : bool
-        Whether to restrict to the identity connected component of the
-        general linear group, i.e. matrices with positive determinant.
-        Optional, default: False.
     """
 
-    def __init__(self, n, positive_det=False, **kwargs):
+    def __init__(self, n, **kwargs):
         embedding_space = ComplexMatrices(n, n)
         kwargs.setdefault("dim", n**2)
         kwargs.setdefault("metric", embedding_space.metric)
 
         self.n = n
-        super().__init__(
+
+        ComplexMatrixLieGroup.__init__(
+            self,
             embedding_space=embedding_space,
             representation_dim=n,
             lie_algebra=ComplexSquareMatrices(n),
             **kwargs
         )
 
-        self.positive_det = positive_det
+        OpenSet.__init__(
+            self,
+            embedding_space=embedding_space,
+            representation_dim=n,
+            lie_algebra=ComplexSquareMatrices(n),
+            **kwargs
+        )
 
     def projection(self, point):
         r"""Project a matrix to the general linear group.
@@ -57,9 +62,6 @@ class ComplexGeneralLinear(ComplexMatrixLieGroup, OpenSet):
             "...,ij->...ij", gs.where(~belongs, gs.atol, 0.0), self.identity
         )
         projected = point + regularization
-        if self.positive_det:
-            det = gs.linalg.det(point)
-            return utils.flip_determinant(projected, det)
         return projected
 
     def belongs(self, point, atol=gs.atol):
@@ -80,7 +82,7 @@ class ComplexGeneralLinear(ComplexMatrixLieGroup, OpenSet):
         has_right_size = self.embedding_space.belongs(point)
         if gs.all(has_right_size):
             det = gs.linalg.det(point)
-            return det > atol if self.positive_det else gs.abs(det) > atol
+            return gs.abs(det) > atol
         return has_right_size
 
     def random_point(self, n_samples=1, bound=1.0, n_iter=100):
@@ -105,7 +107,7 @@ class ComplexGeneralLinear(ComplexMatrixLieGroup, OpenSet):
         n = self.n
         sample = []
         n_accepted, iteration = 0, 0
-        criterion_func = (lambda x: x) if self.positive_det else gs.abs
+        criterion_func = gs.abs
         while n_accepted < n_samples and iteration < n_iter:
             raw_samples = gs.random.normal(size=(n_samples - n_accepted, n, n))
             dets = gs.linalg.det(raw_samples)
